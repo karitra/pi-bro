@@ -108,7 +108,9 @@ let gen_html_img_list fullpath rpath off fls_view =
 			let open Core_filename in 
 				match file_mask with 
 				| None ->  bf_app (gen_thumb_of_file (concat fullpath file))
-				| Some fm -> bf_app (gen_thumb_of_file ~file_mask:fm (concat fullpath file))
+				| Some fm -> 
+					let (img, mask) = (concat fullpath file), (concat fullpath fm) in 
+						bf_app (gen_thumb_of_file ~file_mask:mask img)
 		with 
 			e -> printf "Exn: %s\n" (Exn.to_string e)
 	in
