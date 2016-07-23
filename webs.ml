@@ -105,7 +105,7 @@ let gen_html_img_list fullpath rpath off fls_view =
 			bf_app "<tr>";
 			bf_app "<td>";
 				bf_app (sprintf "<a href=\"image?name=%s&back_off=%d\">" fl off);
-				bf_app fl; 
+				bf_app fl;
 				bf_app "</a></td>";
 			bf_app "<td>";
 			bf_app (sprintf "<img alt=\"%s\" src=\"data:image/tiff;base64," fl);
@@ -121,6 +121,7 @@ let gen_html_img_list fullpath rpath off fls_view =
 		end in
 			begin
 				print_endline (sprintf "Generating page for: %s" fullpath);
+				print_endline (sprintf "request path: %s" rpath);
 				bf_app "<html><head><title>Images thumbnails</title></head><body>";
 				bf_app (Printf.sprintf "<h3>Listing for path %s</h3>" fullpath);
 				bf_app "<table border=\"1\">";
