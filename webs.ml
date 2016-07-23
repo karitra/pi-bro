@@ -83,17 +83,34 @@ let get_binary_data file =
 			Buffer.contents buf;
 		end
 
+let get_binary_data_masked file file_mask =
+	printf "trying to load image file with mask: %s\n" file;
+	let buf  = Buffer.create img_bf_size in
+	let pix  = GdkPixbuf.from_file_at_size file      ~width:thumb_width ~height:thumb_height in
+	let mask = GdkPixbuf.from_file_at_size file_mask ~width:thumb_width ~height:thumb_height in
+		begin
+			GdkPixbuf.composite ~dest:pix ~alpha:200 mask;
+			GdkPixbuf.save_to_buffer pix ~typ:"png" buf;
+			Buffer.contents buf;
+		end
+		
+
 let gen_html_img_list fullpath rpath off fls_view =
 	let bf = Buffer.create bf_size in
 	let bf_app = Buffer.add_string bf in
-	let gen_thumb_of_file file =
-		B64.encode (get_binary_data file)
+	let gen_thumb_of_file ?file_mask file =
+		match file_mask with
+			| None -> B64.encode (get_binary_data file)
+			| Some fm -> B64.encode (get_binary_data_masked file fm)
 	in
-	let render_html_file file =
+	let render_html_file ?file_mask file =
 		try
-			let open Core_filename in
-				bf_app (gen_thumb_of_file (concat fullpath file))
-		with e -> printf "Exn: %s\n" (Exn.to_string e)
+			let open Core_filename in 
+				match file_mask with 
+				| None ->  bf_app (gen_thumb_of_file (concat fullpath file))
+				| Some fm -> bf_app (gen_thumb_of_file ~file_mask:fm (concat fullpath file))
+		with 
+			e -> printf "Exn: %s\n" (Exn.to_string e)
 	in
 	let gen_html_img_row fl =
 		let fl_mask = 
@@ -115,6 +132,11 @@ let gen_html_img_list fullpath rpath off fls_view =
 			bf_app "<td>";
 			bf_app (sprintf "<img alt=\"%s\" src=\"data:image/tiff;base64," fl_mask);
 			render_html_file fl_mask;
+			bf_app "\">";
+			bf_app "</td>";
+			bf_app "<td>";
+			bf_app (sprintf "<img alt=\"%s\" src=\"data:image/tiff;base64," fl_mask);
+			render_html_file ~file_mask:fl_mask fl;
 			bf_app "\">";
 			bf_app "</td>";
 			bf_app "</tr>";
