@@ -69,9 +69,9 @@ end
 
 (* Global constants *)
 let bf_size = 16 * 1024
-let els_per_page = 16
-let thumb_width = 256
-let thumb_height = 128
+let els_per_page = 24
+let thumb_width = 512
+let thumb_height = 256
 let img_bf_size = thumb_width * thumb_height * 4
 
 let get_binary_data file =
@@ -83,7 +83,7 @@ let get_binary_data file =
 			Buffer.contents buf;
 		end
 
-let gen_html_img_list rpath off fls_view =
+let gen_html_img_list fullpath rpath off fls_view =
 	let bf = Buffer.create bf_size in
 	let bf_app = Buffer.add_string bf in
 	let gen_thumb_of_file file =
@@ -92,13 +92,14 @@ let gen_html_img_list rpath off fls_view =
 	let render_html_file file =
 		try
 			let open Core_filename in
-				bf_app (gen_thumb_of_file (concat rpath file))
+				bf_app (gen_thumb_of_file (concat fullpath file))
 		with e -> printf "Exn: %s\n" (Exn.to_string e)
 	in
 	let gen_html_img_row fl =
 		let fl_mask = 
 			let fl_prfx = String.split fl ~on:'.' |> List.hd_exn in
-			fl_prfx ^ "_mask.tiff" 
+				(* TODO: support for tif_f_ extension *)
+				fl_prfx ^ "_mask.tif" 
 		in
 		begin
 			bf_app "<tr>";
@@ -119,14 +120,15 @@ let gen_html_img_list rpath off fls_view =
 			bf_app "</tr>";
 		end in
 			begin
-				print_endline (sprintf "Generating page for: %s" rpath);
+				print_endline (sprintf "Generating page for: %s" fullpath);
 				bf_app "<html><head><title>Images thumbnails</title></head><body>";
-				bf_app (Printf.sprintf "<h3>Listing for path %s</h3>" rpath);
+				bf_app (Printf.sprintf "<h3>Listing for path %s</h3>" fullpath);
 				bf_app "<table border=\"1\">";
 				Array_view.iter ~f:gen_html_img_row fls_view;
 				bf_app "</table>";
 				bf_app "</table></body></html>";
-				print_endline (Printf.sprintf "Generating done: %s" rpath);
+				bf_app (sprintf "<span><a href=\"view/%s?offset=%d\">next page</a></span>" rpath (off + els_per_page));
+				print_endline (Printf.sprintf "Generating done: %s" fullpath);
 				Buffer.contents bf
 			end
 
@@ -168,7 +170,7 @@ let gen_thumb_page rpath off mem_f =
 					|> mem_f
 					|> Array.filter ~f:matcher
 					|> Array_view.make_piped off els_per_page
-					|> gen_html_img_list path off
+					|> gen_html_img_list path rpath off
 
 let html_not_found path =
 	sprintf "<html><body>\
