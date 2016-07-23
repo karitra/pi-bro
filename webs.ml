@@ -128,7 +128,7 @@ let gen_html_img_list fullpath rpath off fls_view =
 				Array_view.iter ~f:gen_html_img_row fls_view;
 				bf_app "</table>";
 				bf_app "</table></body></html>";
-				bf_app (sprintf "<span><a href=\"view/%s?offset=%d\">next page</a></span>" rpath (off + els_per_page));
+				bf_app (sprintf "<span><a href=\"?offset=%d\">next page</a></span>" (off + els_per_page));
 				print_endline (Printf.sprintf "Generating done: %s" fullpath);
 				Buffer.contents bf
 			end
