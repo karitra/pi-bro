@@ -1,3 +1,3 @@
 #/bin/bash
 #
-ocamlbuild -use-ocamlfind -tag thread -pkgs cohttp.lwt,base64,camlimages,core,re2 webs.native
+corebuild -j 4 -use-ocamlfind -tag thread -pkgs cohttp.lwt,base64,re2,lablgtk2,core_extended webs.native
