@@ -157,7 +157,7 @@ let cached_dir_content_lru ls_dir_f sort =
 
 let gen_thumb_page rpath off mem_f =
 	printf "GET %s @ %d\n" rpath off;
-	let matcher = create_img_matcher "^(\\d+)_(\\d+)\\.tiff$" in
+	let matcher = create_img_matcher "^(\\d+)_(\\d+)\\.tiff?$" in
 	let open Core_filename in
 		let path = concat (Sys.getcwd ()) rpath in
 		match Sys.is_directory path with
