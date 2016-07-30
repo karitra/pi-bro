@@ -74,9 +74,9 @@ let gen_subjects_lists folder =
 		else 
 			table
 
-let make_subj_files_list subj frames_set =
+let make_subj_files_list folder subj frames_set =
 	let make_fname =
-		sprintf "%d_%d.tif" subj
+		sprintf "%s/%d_%d.tif" folder subj
 	in
 	let f acc el =
 		(make_fname el)::acc
@@ -87,11 +87,10 @@ let cmd =
 	let run folder () =
 		gen_subjects_lists folder
 			|> Hashtbl.to_alist
-			|> List.map ~f:(fun (subj, frames) -> (subj, (make_subj_files_list subj frames)) )
+			|> List.map ~f:(fun (subj, frames) -> (subj, (make_subj_files_list folder subj frames)) )
 			|> List.iter ~f:(fun (subj, frames_files) -> 
 								generate_vectors frames_files
-								|> store_vectors (sprintf "%d.vecs" subj)
-							)
+								|> store_vectors (sprintf "%d.vecs" subj) )
 	in
 	let open Command.Spec in
 		Command.basic

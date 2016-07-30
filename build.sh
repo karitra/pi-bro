@@ -8,4 +8,4 @@ corebuild -j 4 -use-ocamlfind -tag thread -pkgs camlimages.tiff,re2 gen_vec.nati
 # corebuild -j 4 -use-ocamlfind -tag thread -pkgs camlimages.tiff,re2 gen_vec.byte
 
 echo Building MC solver...
-corebuild -j 4 -use-ocamlfind -tag thread -pkgs lacaml optimal_seq.native
+corebuild -j 4 -use-ocamlfind -tag thread -pkgs sexplib,lacaml optimal_seq.native

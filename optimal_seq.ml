@@ -23,7 +23,7 @@ end = struct
 	module Pair = struct
 		
 		module T = struct
-			type t = Int.t * Int.t with sexp
+			type t = Int.t * Int.t [@@deriving sexp]
 			let compare = compare
 			let hash = Hashtbl.hash
 		end
@@ -51,7 +51,7 @@ end = struct
 			fill 0;
 			let res_mat = Array.make_matrix ~dimx:n ~dimy:n 0.0 in
 				begin
-					Hashtbl.iter 
+					Hashtbl.iteri 
 						~f:(fun ~key:(i,j) ~data -> res_mat.(i).(j) <- data; res_mat.(j).(i) <- data) table;
 					res_mat
 				end
@@ -120,7 +120,7 @@ end = struct
 	open Core.Std
 	open Adj_matrix
 
-	type ptype = float * int list with sexp
+	type ptype = float * int list [@@deriving sexp]
 	exception Internal_error of string
 
 	let _make_probability_matrix mat = 
@@ -191,7 +191,7 @@ end = struct
 
 	module Paths_Set = Set.Make(
 		struct
-			type t = ptype with sexp
+			type t = ptype [@@deriving sexp]
 			let compare (k1,_) (k2,_) = Float.compare k1 k2
 		end
 	)
