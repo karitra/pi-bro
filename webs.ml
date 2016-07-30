@@ -89,7 +89,7 @@ let get_binary_data_masked file file_mask =
 	let pix  = GdkPixbuf.from_file_at_size file      ~width:thumb_width ~height:thumb_height in
 	let mask = GdkPixbuf.from_file_at_size file_mask ~width:thumb_width ~height:thumb_height in
 		begin
-			GdkPixbuf.composite ~dest:pix ~alpha:200 mask;
+			GdkPixbuf.composite ~dest:pix ~alpha:160 ~scale_x:0.2 ~scale_y:0.5 ~interp:`HYPER mask;
 			GdkPixbuf.save_to_buffer pix ~typ:"png" buf;
 			Buffer.contents buf;
 		end
@@ -172,7 +172,7 @@ let cached_dir_content ls_dir_f sort =
 				content)
 
 let cached_dir_content_lru ls_dir_f sort =
-	let tb = Lru.create ~destruct:None 32 in
+	let tb = Lru.create ~destruct:None 16 in
 		(fun path ->
 			match Lru.find tb path with
 			| Some data -> data

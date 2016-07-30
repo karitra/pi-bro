@@ -1,4 +1,6 @@
 _build/*
 *.native
 *.tiff
+*.tif
+*.vecs
 *.xcf
