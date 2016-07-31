@@ -87,20 +87,21 @@ let make_subj_files_list folder subj frames_set =
 		Set.fold ~init:[] ~f frames_set |> List.rev
 
 let cmd = 
-	let run folder () =
-		gen_subjects_lists folder
+	let run folder_in folder_out () =
+		gen_subjects_lists folder_in
 			|> Hashtbl.to_alist
-			|> List.map ~f:(fun (subj, frames) -> (subj, (make_subj_files_list folder subj frames)) )
+			|> List.map ~f:(fun (subj, frames) -> (subj, (make_subj_files_list folder_in subj frames)) )
 			|> List.iter ~f:(fun (subj, frames_files) -> 
 								generate_vectors frames_files
-								|> store_vectors (sprintf "%d.vecs" subj) )
+								|> store_vectors (sprintf "%s/%d.vecs" folder_out subj) )
 	in
 	let open Command.Spec in
 		Command.basic
 			~summary:"\n Generate vector files of images in specified folder"
 			Command.Spec.(
 				empty
-				+> anon ("folder" %: string)
+				+> anon ("input_folder" %: string)
+				+> anon ("output_folder" %: string)
 			)
 			run
 
