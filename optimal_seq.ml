@@ -153,12 +153,12 @@ end = struct
 		let select_next from = 
 			let sl = List.range 0 size
 				|> List.filter ~f:(fun i -> (Hash_set.mem selected i) = false && i <> from) 
-				|> List.map ~f:(fun dest -> dest, mat.(from).(dest)) in
-				let total = List.fold ~init:0.0 ~f:(fun acc (_, d) -> acc +. 1.0 /. d ) sl in
+				|> List.map ~f:(fun dest -> dest, 1.0 /. mat.(from).(dest)) in
+				let total = List.fold ~init:0.0 ~f:(fun acc (_, d) -> acc +. d ) sl in
 					assert (total > 0.0);
 					let sl_norm = List.map ~f:(fun (i,d) -> 
 							(* printf "%d => %d : %.3f\n" from i (1.0 /. d /. total); *)
-							i, 1.0 /. d /. total) sl and
+							i, d /. total) sl and
 						sel_prob = Random.float 1.0 in
 						let comul_prob = ref 0.0 in
 						let new_selected = 
@@ -171,11 +171,17 @@ end = struct
 								| Some (i,_) -> 
 									(* printf "selected: %d\n" i; *)
 									i
-								| None -> raise 
-										(Internal_error 
-											(sprintf "failed to find destination node, sel_prob: %.6f comul_prob: %.6f"
-												sel_prob
-												!comul_prob))
+								| None -> 
+										(* then select first available, but probably an error rounding here *)
+										match sl_norm with
+										| (i,_)::_ -> i
+										| [] -> 
+											(* we must have some node in list *)
+											raise 
+											(Internal_error 
+												(sprintf "failed to find destination node, sel_prob: %.6f comul_prob: %.6f"
+													sel_prob
+													!comul_prob))
 							in
 								begin
 									Hash_set.add selected new_selected;
