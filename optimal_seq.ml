@@ -176,7 +176,7 @@ end = struct
 										match sl_norm with
 										| (i,_)::_ -> i
 										| [] -> 
-											(* we must have some node in list *)
+											(* we must have some node in a list *)
 											raise 
 											(Internal_error 
 												(sprintf "failed to find destination node, sel_prob: %.6f comul_prob: %.6f"

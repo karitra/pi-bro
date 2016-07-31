@@ -70,8 +70,8 @@ end
 (* Global constants *)
 let bf_size = 16 * 1024
 let els_per_page = 24
-let thumb_width = 256
-let thumb_height = 128
+let thumb_width = 320
+let thumb_height = 200
 let img_bf_size = thumb_width * thumb_height * 2
 
 let get_binary_data file =
@@ -131,11 +131,11 @@ let gen_html_img_list fullpath rpath off fls_view =
 			render_html_file fl;
 			bf_app "\">";
 			bf_app "</td>";
-			bf_app "<td>";
+			(* bf_app "<td>";
 			bf_app (sprintf "<img alt=\"%s\" src=\"data:image/tiff;base64," fl_mask);
 			render_html_file fl_mask;
 			bf_app "\">";
-			bf_app "</td>";
+			bf_app "</td>"; *)
 			bf_app "<td>";
 			bf_app (sprintf "<img alt=\"%s\" src=\"data:image/tiff;base64," fl_mask);
 			render_html_file ~file_mask:fl_mask fl;
