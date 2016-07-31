@@ -57,24 +57,32 @@ let gen_subjects_lists folder =
 			let re = Re2.of_string "(\\d+)_(\\d+)\\.tif" in
 			let open Option in
 			let open Re2.Infix in
-			let int_of_re id str = 
-				Re2.find_first ~sub:(`Index id) re str
-					|> Result.ok 
-					>>| int_of_string
-				in
-					Sys.ls_dir folder
-					|> List.filter ~f:(fun fl -> fl =~ re)
-					|> List.iter ~f:(fun fl -> 
-						match Option.both (int_of_re 1 fl) (int_of_re 2 fl) with 
-						| Some (subj, frame) -> 
-							let data = match Hashtbl.find table subj with
-								| Some d -> Int.Set.add d frame
-								| None -> Int.Set.singleton frame 
-							in
-								ignore (Hashtbl.add table ~key:subj ~data)
-						| None -> () );
-					table
-		else 
+			let match_subj_and_frame str = 
+				match Re2.find_submatches re str with
+				| Ok v -> 
+				 	assert (Array.length v >= 3);
+				 	begin match Option.both v.(1) v.(2) with
+					 	| Some (subj_str, frame_str) -> 
+					 		Some (
+					 			int_of_string subj_str, 
+					 			int_of_string frame_str)
+					 	| None -> None
+				 	end
+				| Error err -> failwith (Error.to_string_hum err)
+			in
+				Sys.ls_dir folder
+				|> List.filter ~f:(fun fl -> fl =~ re)
+				|> List.iter   ~f:(fun fl ->
+					match match_subj_and_frame fl with 
+					| Some (subj, frame) -> 
+						let data = match Hashtbl.find table subj with
+							| Some d -> Set.add d frame
+							| None ->   Int.Set.singleton frame 
+						in
+							ignore (Hashtbl.set table ~key:subj ~data)
+					| None -> () );
+				table
+		else
 			table
 
 let make_subj_files_list folder subj frames_set =
