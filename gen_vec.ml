@@ -4,10 +4,13 @@ open Tiff
 open Core.Std
 open Re2.Std
 
+let generate_vectors = 
+	List.map ~f:Vec_of_tiff.generate_brightness_vec 
 
-let generate_vectors img_files_li = 
+(* TODO: remove *)
+let _generate_vectors_deprecated img_files_li = 
 	let gray_colors = float(256) in
-	let get_rgb_brightness c = float(Color.brightness c) /. gray_colors in
+	let get_rgb_brightness  c = float(Color.brightness c) /. gray_colors in
 	let get_rgba_brightness c = float(Color.brightness c.color) /. gray_colors in
 	let get_gray_brightness c = float(c) /. gray_colors in
 	let combine getter brightness x y =
@@ -50,7 +53,7 @@ let store_vectors file vectors =
 let gen_subjects_lists folder =
 	let size = 1024 * 250 in
 	let table = Int.Table.create () ~size in
-		if Sys.is_directory folder = `Yes then
+		if Sys.is_directory ~follow_symlinks:true folder = `Yes then
 			let re = Re2.of_string "(\\d+)_(\\d+)\\.tif" in
 			let open Option in
 			let open Re2.Infix in
