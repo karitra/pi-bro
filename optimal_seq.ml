@@ -1,4 +1,3 @@
-
 module Adj_matrix : sig
 
 	module LD = Lacaml.D
@@ -89,7 +88,7 @@ end = struct
 				(
 					(* eprintf "target line is [%s], index is %d\n" ln i; *)
 					String.drop_prefix ln (i+1)
-					|> String.strip ~drop:Char.is_whitespace
+					|> String.strip
 					|> String.split ~on:' '
 					|> List.map ~f:Float.of_string 
 					|> Vec.of_list
@@ -254,6 +253,7 @@ end = struct
 end
 
 open Core.Std
+open Gc
 
 let cmd =
 	let run vecs_filename repeat noise () =
@@ -275,5 +275,6 @@ let cmd =
 			run
 
 let () =
+	Gc.set { ( Gc.get () ) with Gc.Control.minor_heap_size = 256 * 1024 * 16};
 	Random.self_init ();
-	Command.run ~version:"1.0" cmd
+	Command.run ~version:"1.0a" cmd

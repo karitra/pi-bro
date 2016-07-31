@@ -1,7 +1,9 @@
 _build/*
 tests/*
+.*.swp
 *.native
 *.tiff
 *.tif
 *.vecs
 *.xcf
+cookies.txt

@@ -70,12 +70,12 @@ end
 (* Global constants *)
 let bf_size = 16 * 1024
 let els_per_page = 24
-let thumb_width = 512
-let thumb_height = 256
-let img_bf_size = thumb_width * thumb_height * 4
+let thumb_width = 256
+let thumb_height = 128
+let img_bf_size = thumb_width * thumb_height * 2
 
 let get_binary_data file =
-	printf "trying to load image file: %s\n" file;
+(* 	printf "trying to load image file: %s\n" file; *)
 	let buf = Buffer.create img_bf_size in
 	let pix = GdkPixbuf.from_file_at_size file ~width:thumb_width ~height:thumb_height in
 		begin
@@ -84,12 +84,12 @@ let get_binary_data file =
 		end
 
 let get_binary_data_masked file file_mask =
-	printf "trying to load image file with mask: %s\n" file;
+	(* printf "trying to load image file with mask: %s\n" file; *)
 	let buf  = Buffer.create img_bf_size in
 	let pix  = GdkPixbuf.from_file_at_size file      ~width:thumb_width ~height:thumb_height in
 	let mask = GdkPixbuf.from_file_at_size file_mask ~width:thumb_width ~height:thumb_height in
 		begin
-			GdkPixbuf.composite ~dest:pix ~alpha:160 ~scale_x:0.2 ~scale_y:0.5 ~interp:`HYPER mask;
+			GdkPixbuf.composite ~dest:pix ~alpha:70 ~scale_x:1.0 ~scale_y:1.0 ~interp:`BILINEAR mask;
 			GdkPixbuf.save_to_buffer pix ~typ:"png" buf;
 			Buffer.contents buf;
 		end

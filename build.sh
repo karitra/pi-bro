@@ -15,3 +15,7 @@ corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs lacaml optimal_s
 
 # echo Building image loader tests...
 # corebuild -j 3 -use-ocamlfind -tag thread -pkgs ctypes.foreign -lflags -cclib,-ltiff  vec_of_tiff.native
+
+echo Micro-benchmarks...
+corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs lacaml,re2,core_bench vec_read_bench.native
+
