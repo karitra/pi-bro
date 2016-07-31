@@ -171,7 +171,11 @@ end = struct
 								| Some (i,_) -> 
 									(* printf "selected: %d\n" i; *)
 									i
-								| None -> raise (Internal_error "failed to find destination node!")
+								| None -> raise 
+										(Internal_error 
+											(sprintf "failed to find destination node, sel_prob: %.6f comul_prob: %.6f"
+												sel_prob
+												!comul_prob))
 							in
 								begin
 									Hash_set.add selected new_selected;
