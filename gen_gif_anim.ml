@@ -37,7 +37,7 @@ let compose_cmd subj folder path_list delay output =
 	let label_pfx = "-annotate +20+20 " in
 		add_buff (sprintf "-resize %dx%d " gif_w gif_h);
 		add_buff (sprintf "-delay %dx1000 " delay);
-		add_buff "-font Helvetiva -fill green -pointsize 16";
+		add_buff "-font Helvetiva -fill green -pointsize 16 ";
 		List.iter ~f:(fun i -> 
 			let i_plus = i + 1 in
 			add_buff (sprintf "%s %s \"subj: %d frame: %d\" %s/%s%d.tif " 
