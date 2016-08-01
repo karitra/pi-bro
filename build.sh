@@ -19,3 +19,6 @@ corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs lacaml optimal_s
 echo Micro-benchmarks...
 corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs lacaml,re2,core_bench vec_read_bench.native
 
+echo GIG animation generator...
+corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs core_extended gen_gif_anim.native
+

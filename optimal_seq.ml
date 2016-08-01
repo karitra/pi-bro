@@ -1,3 +1,4 @@
+
 module Adj_matrix : sig
 
 	module LD = Lacaml.D
@@ -11,7 +12,7 @@ module Adj_matrix : sig
 
 	val dump : t -> t
 end = struct
-	open Core
+	(* open Core *)
 	open Core.Std
 
 	module LD = Lacaml.D
@@ -75,7 +76,7 @@ module VectorReader : sig
 
 	val read_as_array : string -> vec array
 end = struct
-	open Core
+	(* open Core *)
 	open Core.Std
 
 	module LD = Lacaml.D
@@ -115,7 +116,7 @@ module StochasticSolver : sig
 	val print_set : pset -> unit
 
 end = struct
-	open Core
+	(* open Core *)
 	open Core.Std
 	open Adj_matrix
 

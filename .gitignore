@@ -6,4 +6,5 @@ tests/*
 *.tif
 *.vecs
 *.xcf
+*.gif
 cookies.txt
