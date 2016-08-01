@@ -26,7 +26,7 @@ let extract_subject fname =
 
 let compose_cmd subj folder path_list delay output =
 	(* Don't know in advance real size, but should assume multiply of pages*)
-	let default_buffer_size = 16 * 1024 in
+	let default_buffer_size = 12 * 1024 * 1024 in
 	let (gif_w, gif_h) = 300, 200 in
 	let b = Buffer.create default_buffer_size in
 	let add_buff = 
@@ -34,8 +34,12 @@ let compose_cmd subj folder path_list delay output =
 	in
 	let file_pfx = sprintf "%d_" subj in
 	let page_def = sprintf "-page %dx%d" gif_w gif_h in
+	let label_pfx = "-font Helvetiva -fill green -pointsize 16 -annotate +20+20 " in
 		add_buff (sprintf "-delay %dx1000 " delay);
-		List.iter ~f:(fun i -> add_buff (sprintf "%s %s/%s%d.tif " page_def folder file_pfx (i+1)) ) path_list;
+		List.iter ~f:(fun i -> 
+			let i_plus = i + 1 in
+			add_buff (sprintf "%s %s \"subj: %d frame: %d\" %s/%s%d.tif " 
+				page_def label_pfx subj i_plus folder file_pfx i_plus) ) path_list;
 		add_buff "-loop 0 ";
 		(* add_buff (sprintf "%s/%s " folder output); *)
 		add_buff output;
@@ -47,8 +51,9 @@ let () =
 			path = read_path_seq path_file and
 			folder = Filename.dirname path_file
 		in
-		printf "CMD:\n\t%s\n" (compose_cmd subj folder path delay output);
-		Shell.sh "convert %s" (compose_cmd subj folder path delay output)
+		let c = compose_cmd subj folder path delay output in
+			printf "CMD:\n\t%s\nlen: %d\n" c (String.length c);
+			Shell.sh "convert %s" c
 	in
 	let cmd = 
 		Command.basic
