@@ -26,15 +26,16 @@ let extract_subject fname =
 
 let compose_cmd subj folder path_list delay output =
 	(* Don't know in advance real size, but should assume multiply of pages*)
-	let default_buffer_size = 12 * 1024 * 1024 in
+	let default_buffer_size = 32 * 4 * 1024 in
 	let (gif_w, gif_h) = 300, 200 in
 	let b = Buffer.create default_buffer_size in
 	let add_buff = 
 		Buffer.add_string b 
 	in
 	let file_pfx = sprintf "%d_" subj in
-	let page_def = sprintf "-page %dx%d" gif_w gif_h in
+	let page_def = "-page 0" in
 	let label_pfx = "-font Helvetiva -fill green -pointsize 16 -annotate +20+20 " in
+		add_buff (sprintf "-resize %dx%d " gif_w gif_h);
 		add_buff (sprintf "-delay %dx1000 " delay);
 		List.iter ~f:(fun i -> 
 			let i_plus = i + 1 in
@@ -62,7 +63,7 @@ let () =
 				empty
 				+> anon ("path_file" %:string)
 				+> anon ("output_gif" %:string)
-				+> flag "-delay" (optional_with_default 80 int) ~doc:"ms inter frame delay"
+				+> flag "-delay" (optional_with_default 120 int) ~doc:"ms inter frame delay"
 			)
 			run
 	in
