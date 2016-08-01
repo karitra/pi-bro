@@ -33,10 +33,11 @@ let compose_cmd subj folder path_list delay output =
 		Buffer.add_string b 
 	in
 	let file_pfx = sprintf "%d_" subj in
-	let page_def = "-page 0" in
-	let label_pfx = "-font Helvetiva -fill green -pointsize 16 -annotate +20+20 " in
+	let page_def = sprintf "-page %dx%d" gif_w gif_h in
+	let label_pfx = "-annotate +20+20 " in
 		add_buff (sprintf "-resize %dx%d " gif_w gif_h);
 		add_buff (sprintf "-delay %dx1000 " delay);
+		add_buff "-font Helvetiva -fill green -pointsize 16";
 		List.iter ~f:(fun i -> 
 			let i_plus = i + 1 in
 			add_buff (sprintf "%s %s \"subj: %d frame: %d\" %s/%s%d.tif " 
@@ -53,8 +54,9 @@ let () =
 			folder = Filename.dirname path_file
 		in
 		let c = compose_cmd subj folder path delay output in
-			printf "CMD:\n\t%s\nlen: %d\n" c (String.length c);
-			Shell.sh "convert %s" c
+			let to_crop = (String.length c) / 3 in
+				printf "CMD:\n\t%s\nlen: %d\n" (String.drop_suffix c to_crop) (String.length c);
+				Shell.sh "convert %s" c
 	in
 	let cmd = 
 		Command.basic
