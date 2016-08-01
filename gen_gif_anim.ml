@@ -24,7 +24,7 @@ let extract_subject fname =
 		| None -> failwith "Incorrect path file naming, should be <NUM>.<extension>"
 	)
 
-let compose_cmd subj path_list delay output = 
+let compose_cmd subj folder path_list delay output =
 	(* Don't know in advance real size, but should assume multiply of pages*)
 	let default_buffer_size = 16 * 1024 in
 	let (gif_w, gif_h) = 300, 200 in
@@ -35,18 +35,20 @@ let compose_cmd subj path_list delay output =
 	let file_pfx = sprintf "%d_" subj in
 	let page_def = sprintf "-page %dx%d" gif_w gif_h in
 		add_buff (sprintf "-delay %dx1000 " delay);
-		List.iter ~f:(fun i -> add_buff (sprintf "%s %s%d.tif " page_def file_pfx (i+1)) ) path_list;
+		List.iter ~f:(fun i -> add_buff (sprintf "%s %s/%s%d.tif " page_def folder file_pfx (i+1)) ) path_list;
 		add_buff "-loop 0 ";
+		(* add_buff (sprintf "%s/%s " folder output); *)
 		add_buff output;
 		Buffer.contents b
 
 let () =
 	let run path_file output delay () =
 		let subj = extract_subject path_file and
-			path = read_path_seq path_file 
+			path = read_path_seq path_file and
+			folder = Filename.dirname path_file
 		in
-		printf "CMD:\n\t%s\n" (compose_cmd subj path delay output);
-		Shell.sh "convert %s" (compose_cmd subj path delay output)
+		printf "CMD:\n\t%s\n" (compose_cmd subj folder path delay output);
+		Shell.sh "convert %s" (compose_cmd subj folder path delay output)
 	in
 	let cmd = 
 		Command.basic
