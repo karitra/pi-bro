@@ -9,6 +9,7 @@ module Adj_matrix : sig
 	val make : LD.vec array -> t
 	val total_half : t -> float
 	val length : t -> int
+	val row_as_array : t -> int -> float array
 
 	val dump : t -> t
 end = struct
@@ -32,6 +33,7 @@ end = struct
 		include Hashable.Make(T)
 	end
 
+	let row_as_array t i = t.(i)
 
 	let make vecs =
 		let n = Array.length vecs in
@@ -118,6 +120,9 @@ module StochasticSolver : sig
 end = struct
 	(* open Core *)
 	open Core.Std
+	open Core_extended
+	open Core_bench
+
 	open Adj_matrix
 
 	type ptype = float * int list [@@deriving sexp]
@@ -149,9 +154,9 @@ end = struct
 
 	let generate_path (mat:Adj_matrix.t) = 
 		let size = Adj_matrix.length mat in
-		let sel_init = Random.int size in
 		let selected = Hash_set.create () ~hashable:Int.hashable ~size in
-		let select_next from = 
+		(* TODO: make vector based version in order to avoid float unboxing and run benchmarks *)
+		let select_next from =
 			let sl = List.range 0 size
 				|> List.filter ~f:(fun i -> (Hash_set.mem selected i) = false && i <> from) 
 				|> List.map ~f:(fun dest -> dest, 1.0 /. mat.(from).(dest)) in
@@ -178,22 +183,72 @@ end = struct
 										| (i,_)::_ -> i
 										| [] -> 
 											(* we must have some node in a list *)
-											raise 
-											(Internal_error 
+											raise (Internal_error 
 												(sprintf "failed to find destination node, sel_prob: %.6f comul_prob: %.6f"
 													sel_prob
 													!comul_prob))
 							in
-								begin
-									Hash_set.add selected new_selected;
-									new_selected
-								end
+								(* Hash_set.add selected new_selected;  *)
+								new_selected
 		in
+		let _select_next_arr from =
+			let row = Adj_matrix.row_as_array mat from in
+			let ign_bits = Bitarray.create (Array.length row) in
+			let sa = Array.mapi 
+						~f:(fun i el -> 
+							if Hash_set.mem selected i = false && i <> from then
+								1.0 /. el
+							else
+								(Bitarray.set ign_bits i true; 0.0) ) row
+			in
+				(* printf "From = %d\nHashtbl.length %d\n" from (Hash_selected); *)
+				(* Array.iter ~f:(fun el -> printf "  %f\n" el) sa; *)
+				let total = Array.sum (module Float) ~f:ident sa in
+					(* printf "Sum of arr sized %d is %f\n" (Array.length sa) total; *)
+					assert (total > 0.0);
+					Array.iteri ~f:(fun i el -> sa.(i) <- el /. total) sa;
+					let sel_prob = Random.float 1.0 in
+					let comul_prob = ref 0.0 in
+					let new_selected =
+						match Array.findi ~f:(fun i el_prob ->
+								comul_prob := !comul_prob +. el_prob;
+								sel_prob <= !comul_prob && Bitarray.get ign_bits i = false
+							) sa with
+						| Some (i,_) -> 
+							(* printf "selected: %d\n" i; *)
+							i
+						| None -> (* get first possible *)
+							match Array.findi ~f:(fun i _ -> Bitarray.get ign_bits i = false) sa with
+							| Some (i,_) -> i
+							| None -> (* we must have some node allowable to be selected in the array *)
+								raise (Internal_error 
+									(sprintf 
+										"failed to find destination node, sel_prob: %.6f comul_prob: %.6f"
+										sel_prob !comul_prob)) 
+					in
+						(* Hash_set.add selected new_selected; *)
+						new_selected
+		in
+		let sel_init = Random.int size in
+		(* let t_arr from () = 
+			_select_next_arr from in
+		let t_list from () =
+			select_next from in
+		let make_bench name f from = 
+			Bench.Test.create ~name (f from) in
+				Command.run (Bench.make_command
+					[
+						make_bench "select arr" t_arr sel_init;
+						make_bench "select list" t_list sel_init;
+					]
+				) ~argv:["self"];
+				[]
+		*)
 		begin
 			Hash_set.add selected sel_init;
 			let rec loop acc sel size = 
 					if size = 0 then sel::acc
-					else loop (sel::acc) (select_next sel) (size-1)
+					else loop (sel::acc) (_select_next_arr sel) (size-1)
 				in
 					loop [] sel_init (size-1);
 		end

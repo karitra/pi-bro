@@ -11,7 +11,7 @@ corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs ctypes.foreign,c
 # corebuild -j 4 -use-ocamlfind -tag thread -pkgs camlimages.tiff,re2 gen_vec.byte
 
 echo Building MC solver...
-corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs lacaml optimal_seq.native
+corebuild -j 4 -cflags -unsafe -use-ocamlfind -tag thread -pkgs core_extended,lacaml,core_bench optimal_seq.native
 
 # echo Building image loader tests...
 # corebuild -j 3 -use-ocamlfind -tag thread -pkgs ctypes.foreign -lflags -cclib,-ltiff  vec_of_tiff.native
