@@ -113,9 +113,10 @@ module StochasticSolver : sig
 	exception Internal_error of string
 	open Adj_matrix
 
-	type pset
-	val solve : ?take_first:int -> int -> bool -> Adj_matrix.t -> pset 
-	val print_set : pset -> unit
+	type ptype
+	(* type pset *)
+	val solve : ?take_first:int -> ?path_pool_limit:int -> int -> bool -> Adj_matrix.t -> ptype list
+	val print_set : ptype list -> unit
 
 end = struct
 	(* open Core *)
@@ -125,7 +126,7 @@ end = struct
 
 	open Adj_matrix
 
-	type ptype = float * int list [@@deriving sexp]
+	type ptype = float * int * int * int list [@@deriving sexp]
 	exception Internal_error of string
 
 	let _make_probability_matrix mat = 
@@ -156,7 +157,7 @@ end = struct
 		let size = Adj_matrix.length mat in
 		let selected = Hash_set.create () ~hashable:Int.hashable ~size in
 		(* TODO: make vector based version in order to avoid float unboxing and run benchmarks *)
-		let select_next from =
+		let _select_next from =
 			let sl = List.range 0 size
 				|> List.filter ~f:(fun i -> (Hash_set.mem selected i) = false && i <> from) 
 				|> List.map ~f:(fun dest -> dest, 1.0 /. mat.(from).(dest)) in
@@ -188,9 +189,10 @@ end = struct
 													sel_prob
 													!comul_prob))
 							in
-								(* Hash_set.add selected new_selected;  *)
+								Hash_set.add selected new_selected; 
 								new_selected
 		in
+		(* Bench shows that array version at least twice faster in huge arrays e.g. >= ~200 elements *)
 		let _select_next_arr from =
 			let row = Adj_matrix.row_as_array mat from in
 			let ign_bits = Bitarray.create (Array.length row) in
@@ -226,55 +228,36 @@ end = struct
 										"failed to find destination node, sel_prob: %.6f comul_prob: %.6f"
 										sel_prob !comul_prob)) 
 					in
-						(* Hash_set.add selected new_selected; *)
+						Hash_set.add selected new_selected;
 						new_selected
 		in
 		let sel_init = Random.int size in
-		(* let t_arr from () = 
-			_select_next_arr from in
-		let t_list from () =
-			select_next from in
-		let make_bench name f from = 
-			Bench.Test.create ~name (f from) in
-				Command.run (Bench.make_command
-					[
-						make_bench "select arr" t_arr sel_init;
-						make_bench "select list" t_list sel_init;
-					]
-				) ~argv:["self"];
-				[]
-		*)
 		begin
 			Hash_set.add selected sel_init;
+			let first = ref sel_init in
+			let last = ref 0 in
 			let rec loop acc sel size = 
-					if size = 0 then sel::acc
-					else loop (sel::acc) (_select_next_arr sel) (size-1)
-				in
-					loop [] sel_init (size-1);
+				if size = 0 then (last := sel; sel::acc)
+				else loop (sel::acc) (_select_next_arr sel) (size-1)
+			in
+				(!first, !last, loop [] sel_init (size-1))
 		end
 
 
 	module Paths_Set = Set.Make(
 		struct
 			type t = ptype [@@deriving sexp]
-			let compare (k1,_) (k2,_) = Float.compare k1 k2
+			let compare (k1,_,_,_) (k2,_,_,_) = Float.compare k1 k2
 		end
 	)
 
 	type pset = Paths_Set.t
 
-	let solve ?(take_first=12) gen_lim add_noise (mat:Adj_matrix.t) = 
+	let solve ?(take_first=7) ?(path_pool_limit=1000) gen_lim add_noise (mat:Adj_matrix.t) = 
 		
 		assert (Adj_matrix.length mat >= 0);
 		assert (gen_lim >= 0);
 
-		let sentry = ref 0 in
-		let acc_limited_set acc elt =
-			incr sentry;
-			(* printf "sentry %d\n" !sentry; *)
-			let s = Paths_Set.add acc elt in
-				if !sentry < take_first then `Continue s else `Stop s
-		in
 		let jitter_divs = [|10713.0; 50117.0; 30571.0; 70903.0; 317953.0|] in
 		let jitter v =
 			let esp = v /. jitter_divs.(Random.int (Array.length jitter_divs)) in
@@ -283,38 +266,64 @@ end = struct
 				else
 					v -. esp
 		in
+
 		let disort = if add_noise then jitter else ident in
+		let endpoints_hist = Int.Table.create ~size:(Adj_matrix.length mat) () in
+
 		let rec loop acc_set lim =
 			if lim = 0 then
 				acc_set
 			else 
+
 			begin		
-				let path = generate_path mat in
+
+				let (first, last, path) = generate_path mat in
 				let path_cost = disort (path_cost path mat) in
-				if Paths_Set.length acc_set >= take_first then
-					begin
-						sentry := 0;
-						let pruned_set = Paths_Set.fold_until ~init:Paths_Set.empty ~f:acc_limited_set acc_set
-						in
-							(* printf "Pruned length %d\n" (Paths_Set.length pruned_set); *)
-							loop (Paths_Set.add pruned_set (path_cost, path)) (lim-1)
-					end
-				else
-					loop (Paths_Set.add acc_set (path_cost, path)) (lim-1)
-			end
-			in begin
-				sentry := 0;
-				loop (Paths_Set.empty) gen_lim 
-				|> (fun set -> sentry := 0; set)
-				|> Paths_Set.fold_until ~init:Paths_Set.empty ~f:acc_limited_set
+
+				let update =
+					function
+					| Some i -> i + 1
+					| None -> 1 in
+					let pset_size = Paths_Set.length acc_set in
+					if pset_size > path_pool_limit then
+						(* printf "Pruned length %d\n" (Paths_Set.length pruned_set); *)
+						let () = 
+							match Paths_Set.min_elt acc_set with
+							| Some (_,f,l,_) -> 
+									Hashtbl.update endpoints_hist f ~f:update;
+									Hashtbl.update endpoints_hist l ~f:update
+							| None -> () in
+								(* with removing maximum *)
+								loop (Paths_Set.remove_index acc_set (pset_size-1)) (lim-1)
+					else
+						loop (Paths_Set.add acc_set (path_cost, first, last, path)) (lim-1)
 			end
 
+			in
+			let dump_endpoint_hist oc =
+				fprintf oc "%s\n" "Endpoints histogram:";
+				let cmp = Tuple2.compare ~cmp1:(fun _ _ -> 0) ~cmp2:(fun cnt1 cnt2 -> cnt2 - cnt1) in
+				Hashtbl.to_alist endpoints_hist
+				|> List.sort ~cmp
+				|> List.iter ~f:(fun (nd, cnt) -> fprintf oc "  %d => %d\n" nd cnt)
+			
+			in
+			begin
+				loop (Paths_Set.empty) gen_lim 
+				|> (fun set -> 
+					dump_endpoint_hist stdout;
+					set)
+				|> Paths_Set.to_list 
+				|> (fun li -> List.take li take_first)
+			end
+
+
 	let print_set =
-		let print (cost, li) = 
+		let print (cost,_,_,li) = 
 			printf "path cost: %.3f nodes: %s\n" cost 
 				(List.fold ~init:"" ~f:(fun acc el -> acc ^ (string_of_int el) ^ " ") li) 
 		in
-			Paths_Set.iter ~f:print 
+			List.iter ~f:print 
 
 end
 
