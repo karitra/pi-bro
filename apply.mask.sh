@@ -1,19 +1,19 @@
 #!/bin/bash
 
-CPUs=`nproc --all`
-MASK_SFX='.amask.png'
+ASK_SFX='.amask.png'
 FRAME_SIZE='400x380\!'
 
-if [ $# -le 2 ]; then
+if [ $# -lt 2 ]; then
 	echo "Wrong number of parameters, should be: SRC_DIR DST_DIR"
 	exit 1
 fi
 
+CPUs=`nproc --all`
 echo Running on $CPUs CPUS
 
 echo Preparing masks in folder $1
 
-find $1 -type f -name "*_mask.tif" | xargs -P $CPUs -I '{MASK}' sh -c "FL=$(basename {MASK}); convert -fill green -opaque white {MASK} -alpha Shape $2/${FL##*.}.${MASK_SFX}"
+find $1 -type f -name "*_mask.tif" | xargs -P $CPUs -I '{MASK}' sh -c 'FL=$(basename {MASK}) convert -fill green -opaque white {MASK} -alpha Shape '$2'/${FL##*.}${MASK_SFX}'
 
 echo Preparing image files in folder $2
 
