@@ -1,8 +1,13 @@
 #!/bin/bash
 
-CPUs=`nprocs --all`
+CPUs=`nproc --all`
 MASK_SFX='.amask.png'
 FRAME_SIZE='400x380\!'
+
+if [ $# -le 2 ]; then
+	echo "Wrong number of parameters, should be: SRC_DIR DST_DIR"
+	exit 1
+fi
 
 echo Running on $CPUs CPUS
 
