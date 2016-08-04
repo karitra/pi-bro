@@ -7,4 +7,5 @@ tests/*
 *.vecs
 *.xcf
 *.gif
+*.png
 cookies.txt

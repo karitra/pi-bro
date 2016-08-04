@@ -43,9 +43,12 @@ end = struct
 				()
 			else begin
 				for j = i + 1 to n - 1 do
+					
 					let diff = Vec.sub vecs.(i) vecs.(j) in 
 					let norm = Vec.sqr_nrm2 diff in
+					(* let norm = Vec.sqr_nrm2 vecs.(i) in *)
 						Hashtbl.set table ~key:(i,j) ~data:norm
+
 				done;
 				fill (i+1)
 			end
@@ -333,10 +336,13 @@ open Gc
 let cmd =
 	let run vecs_filename repeat noise () =
 		VectorReader.read_as_array vecs_filename 
-		|> Adj_matrix.make 
+		|> Adj_matrix.make
+		
 		(* |> Adj_matrix.dump *)
-		|> StochasticSolver.solve repeat noise
-		|> StochasticSolver.print_set
+		
+		|> ignore
+		(* |> StochasticSolver.solve repeat noise
+		|> StochasticSolver.print_set *)
 	in
 	let open Command.Spec in
 		Command.basic

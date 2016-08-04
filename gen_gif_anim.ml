@@ -27,7 +27,7 @@ let extract_subject fname =
 let compose_cmd subj folder path_list delay output =
 	(* Don't know in advance real size, but should assume multiply of pages*)
 	let default_buffer_size = 32 * 4 * 1024 in
-	let (gif_w, gif_h) = 300, 200 in
+	let (gif_w, gif_h) = 400, 320 in
 	let b = Buffer.create default_buffer_size in
 	let add_buff = 
 		Buffer.add_string b 
