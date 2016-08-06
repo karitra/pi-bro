@@ -13,9 +13,9 @@ echo Running on $CPUs CPUS
 
 echo Preparing masks in folder $1
 
-find $1 -type f -name "*_mask.tif" | xargs -P $CPUs -I '{MASK}' sh -c 'FL=$(basename {MASK}); convert  -alpha Shape {MASK} -fill green -opaque white '$2'/${FL%.*}'$MASK_SFX
+find $1 -type f -name "*_mask.tif" | xargs -P $CPUs -I '{MASK}' sh -c 'FL=$(basename {MASK}); convert  -alpha Shape {MASK} -fill '"'rgba(0,250,0,0.5)'"' -opaque white '$2'/${FL%.*}'$MASK_SFX
 
-echo Preparing image files in folder $2
+echo Combine images files in folder $2
 
 find $2 -type f -name "*$MASK_SFX" | xargs -P $CPUs -I '{MASK}' sh -c 'FL=$(basename {MASK}); IMG_BASE=${FL%_mask'$MASK_SFX'}; composite -compose Multiply '$1'/${IMG_BASE}.tif {MASK} '"$2"'/${IMG_BASE}.png'
 

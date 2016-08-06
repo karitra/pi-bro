@@ -225,11 +225,11 @@ end = struct
 						| None -> (* get first possible *)
 							match Array.findi ~f:(fun i _ -> Bitarray.get ign_bits i = false) sa with
 							| Some (i,_) -> i
-							| None -> (* we must have some node allowable to be selected in the array *)
-								raise (Internal_error 
-									(sprintf 
+							| None -> (* we must have some node allowable to be available for selection in the array *)
+								raise (Internal_error
+									(sprintf
 										"failed to find destination node, sel_prob: %.6f comul_prob: %.6f"
-										sel_prob !comul_prob)) 
+										sel_prob !comul_prob))
 					in
 						Hash_set.add selected new_selected;
 						new_selected
