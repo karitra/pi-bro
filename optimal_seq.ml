@@ -284,9 +284,10 @@ end = struct
 				let path_cost = disort (path_cost path mat) in
 
 				let update =
-					function
-					| Some i -> i + 1
-					| None -> 1 in
+						function
+						| Some i -> i + 1
+						| None -> 1 
+					in
 					let pset_size = Paths_Set.length acc_set in
 					if pset_size > path_pool_limit then
 						(* printf "Pruned length %d\n" (Paths_Set.length pruned_set); *)
@@ -295,9 +296,15 @@ end = struct
 							| Some (_,f,l,_) -> 
 									Hashtbl.update endpoints_hist f ~f:update;
 									Hashtbl.update endpoints_hist l ~f:update
-							| None -> () in
-								(* with removing maximum *)
-								loop (Paths_Set.remove_index acc_set (pset_size-1)) (lim-1)
+							| None -> () 
+						in
+							let pl = Paths_Set.to_list acc_set in
+								let prunded_acc = 
+									List.take pl take_first
+									|> Paths_Set.of_list
+							in
+								(* with removed longest *)
+								loop prunded_acc (lim-1)
 					else
 						loop (Paths_Set.add acc_set (path_cost, first, last, path)) (lim-1)
 			end
