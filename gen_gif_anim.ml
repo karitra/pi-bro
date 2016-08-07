@@ -1,7 +1,6 @@
 open Core_extended.Std
 open Core.Std
 
-
 let read_path_seq fname = 
 	let f ic =
 		let pattern = "nodes:" in
@@ -39,16 +38,13 @@ let compose_cmd subj folder path_list delay output =
 		Buffer.add_string b 
 	in
 	let file_pfx = sprintf "%d_" subj in
-	let _rem_page_def = sprintf "-resize %dx%d\\!" gif_w gif_h in
-	let label_pfx = "-annotate +20+20 " in
 		(* add_buff (sprintf "-size %dx%d " gif_w gif_h); *)
-		add_buff "-font Helvetiva -fill green -pointsize 16 ";
 		List.iter ~f:(fun i ->
 			let i_plus = i + 1 in
-			add_buff (sprintf "%s \"subj: %d\" %s/%s%d.png " 
-				label_pfx subj folder file_pfx i_plus) ) path_list;
+			add_buff (sprintf "%s/%s%d.png " 
+				folder file_pfx i_plus) ) path_list;
 		add_buff "-loop 0 ";
-		add_buff (sprintf "-delay %dx300 " delay);
+		add_buff (sprintf "-delay %dx1000 " delay);
 		add_buff (sprintf "-resize %dx%d " gif_w gif_h);
 		add_buff output;
 		Buffer.contents b
@@ -80,4 +76,4 @@ let () =
 			)
 			run
 	in
-	Command.run ~version:"1.0" cmd
+	Command.run ~version:"1.1" cmd

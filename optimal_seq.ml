@@ -363,4 +363,4 @@ let cmd =
 let () =
 	Gc.set { ( Gc.get () ) with Gc.Control.minor_heap_size = 256 * 1024 * 16};
 	Random.self_init ();
-	Command.run ~version:"1.0a" cmd
+	Command.run ~version:"1.1" cmd
