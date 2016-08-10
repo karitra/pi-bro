@@ -159,7 +159,10 @@ end = struct
 	let generate_path (mat:Adj_matrix.t) = 
 		let size = Adj_matrix.length mat in
 		let selected = Hash_set.create () ~hashable:Int.hashable ~size in
-		(* TODO: make vector based version in order to avoid float unboxing and run benchmarks *)
+		(*
+			DONE: make vector based version in order to avoid float unboxing and run benchmarks
+			list based _select_next is deprecated
+		*)
 		let _select_next from =
 			let sl = List.range 0 size
 				|> List.filter ~f:(fun i -> (Hash_set.mem selected i) = false && i <> from) 
@@ -196,7 +199,7 @@ end = struct
 								new_selected
 		in
 		(* Bench shows that array version at least twice faster in huge arrays e.g. >= ~200 elements *)
-		let _select_next_arr from =
+		let select_next_arr from =
 			let row = Adj_matrix.row_as_array mat from in
 			let ign_bits = Bitarray.create (Array.length row) in
 			let sa = Array.mapi 
@@ -241,7 +244,7 @@ end = struct
 			let last = ref 0 in
 			let rec loop acc sel size = 
 				if size = 0 then (last := sel; sel::acc)
-				else loop (sel::acc) (_select_next_arr sel) (size-1)
+				else loop (sel::acc) (select_next_arr sel) (size-1)
 			in
 				(!first, !last, loop [] sel_init (size-1))
 		end
