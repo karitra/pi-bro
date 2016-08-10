@@ -39,13 +39,13 @@ let compose_cmd subj folder path_list delay output =
 	in
 	let file_pfx = sprintf "%d_" subj in
 		(* add_buff (sprintf "-size %dx%d " gif_w gif_h); *)
+		add_buff (sprintf "-delay %dx1000 " delay);
 		List.iter ~f:(fun i ->
 			let i_plus = i + 1 in
 			add_buff (sprintf "%s/%s%d.png " 
 				folder file_pfx i_plus) ) path_list;
 		add_buff "-loop 0 ";
-		add_buff (sprintf "-delay %dx1000 " delay);
-		add_buff (sprintf "-resize %dx%d " gif_w gif_h);
+		add_buff (sprintf "-resize %dx%d\\! " gif_w gif_h);
 		add_buff output;
 		Buffer.contents b
 
