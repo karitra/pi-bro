@@ -48,7 +48,6 @@ end = struct
 					let norm = Vec.sqr_nrm2 diff in
 					(* let norm = Vec.sqr_nrm2 vecs.(i) in *)
 						Hashtbl.set table ~key:(i,j) ~data:norm
-
 				done;
 				fill (i+1)
 			end
@@ -118,7 +117,7 @@ module StochasticSolver : sig
 
 	type ptype
 	(* type pset *)
-	val solve : ?take_first:int -> ?path_pool_limit:int -> int -> bool -> Adj_matrix.t -> ptype list
+	val solve : ?take_first:int -> ?paths_pool_limit:int -> int -> bool -> Adj_matrix.t -> ptype list
 	val print_set : ptype list -> unit
 
 end = struct
@@ -156,7 +155,7 @@ end = struct
 		in
 		calc 0.0 p
 
-	let generate_path (mat:Adj_matrix.t) = 
+	let generate_path ehist (mat:Adj_matrix.t) = 
 		let size = Adj_matrix.length mat in
 		let selected = Hash_set.create () ~hashable:Int.hashable ~size in
 		(*
@@ -237,7 +236,35 @@ end = struct
 						Hash_set.add selected new_selected;
 						new_selected
 		in
-		let sel_init = Random.int size in
+		(* selection of path starting point *)
+		let sel_init = match Hashtbl.length ehist with
+			| 0 -> Random.int size
+			| _ -> 
+				(* let pride = Hashtbl.keys ehist |> Int.Hash_set.of_list in *)
+				let sel_arr_hist = Array.create ~len:size 1 in
+					for i = 0 to size - 1 do
+						if Hashtbl.mem ehist i then
+							sel_arr_hist.(i) <- Hashtbl.find_and_call ehist i 
+								~if_found:(fun d -> d)
+								~if_not_found:(fun _ -> 1)
+						else
+							()
+					done;
+					let total   = float_of_int(Array.sum (module Int) sel_arr_hist ~f:ident) in
+					assert(total > 0.0);
+					let sel_arr = Array.map sel_arr_hist ~f:(fun x -> (float_of_int x) /. total) in
+					let sel_prob = Random.float 1.0 in
+					let comul_prob = ref 0.0 in
+						match Array.findi 
+							~f:(fun _ el_prob -> 
+									comul_prob := !comul_prob +. el_prob;
+									!comul_prob >= sel_prob) sel_arr with
+						| Some (i,_) -> 
+							(* print_endline "Sampling from pride pool"; *)
+							i
+						| None -> Random.int size
+		in
+		(* let sel_init = Random.int size in *)
 		begin
 			Hash_set.add selected sel_init;
 			let first = ref sel_init in
@@ -259,7 +286,7 @@ end = struct
 
 	type pset = Paths_Set.t
 
-	let solve ?(take_first=7) ?(path_pool_limit=1000) gen_lim add_noise (mat:Adj_matrix.t) = 
+	let solve ?(take_first=7) ?(paths_pool_limit=1000) gen_lim add_noise (mat:Adj_matrix.t) = 
 		
 		assert (Adj_matrix.length mat >= 0);
 		assert (gen_lim >= 0);
@@ -275,6 +302,7 @@ end = struct
 
 		let disort = if add_noise then jitter else ident in
 		let endpoints_hist = Int.Table.create ~size:(Adj_matrix.length mat) () in
+		let iter = ref 0 in
 
 		let rec loop acc_set lim =
 			if lim = 0 then
@@ -283,24 +311,26 @@ end = struct
 
 			begin		
 
-				let (first, last, path) = generate_path mat in
+				let (first, last, path) = generate_path endpoints_hist mat in
 				let path_cost = disort (path_cost path mat) in
 
-				let update =
+					let update =
 						function
 						| Some i -> i + 1
-						| None -> 1 
-					in
+						| None -> 1 in
+
 					let pset_size = Paths_Set.length acc_set in
-					if pset_size > path_pool_limit then
-						(* printf "Pruned length %d\n" (Paths_Set.length pruned_set); *)
-						let () = 
-							match Paths_Set.min_elt acc_set with
-							| Some (_,f,l,_) -> 
-									Hashtbl.update endpoints_hist f ~f:update;
-									Hashtbl.update endpoints_hist l ~f:update
-							| None -> () 
-						in
+						incr iter;
+						if !iter > paths_pool_limit then 
+							let best_list = Paths_Set.to_list acc_set in
+								List.take best_list take_first
+								|> List.iter 
+									~f:(fun (_,f,l,_) ->
+										Hashtbl.update endpoints_hist f ~f:update;
+										Hashtbl.update endpoints_hist l ~f:update)
+						else ();
+						if pset_size > paths_pool_limit then
+							(* printf "Pruned length %d\n" (Paths_Set.length pruned_set); *)
 							let pl = Paths_Set.to_list acc_set in
 								let prunded_acc = 
 									List.take pl take_first
@@ -308,8 +338,8 @@ end = struct
 							in
 								(* with removed longest *)
 								loop prunded_acc (lim-1)
-					else
-						loop (Paths_Set.add acc_set (path_cost, first, last, path)) (lim-1)
+						else
+							loop (Paths_Set.add acc_set (path_cost, first, last, path)) (lim-1)
 			end
 
 			in
