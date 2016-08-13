@@ -239,16 +239,21 @@ end = struct
 		(* selection of path starting point *)
 		let sel_init = match Hashtbl.length ehist with
 			| 0 -> Random.int size
-			| _ -> 
-				(* let pride = Hashtbl.keys ehist |> Int.Hash_set.of_list in *)
-				let sel_arr_hist = Array.create ~len:size 1 in
+			| _ ->
+				(* minor count of nodes which was never hit (not in endpoints histogram) *)
+				let minor_count = 
+					Hashtbl.data ehist 
+					|> Int.Set.of_list 
+					|> Set.min_elt 
+					|> Option.value ~default:1
+				in
+				let sel_arr_hist = Array.create ~len:size minor_count in
 					for i = 0 to size - 1 do
 						if Hashtbl.mem ehist i then
 							sel_arr_hist.(i) <- Hashtbl.find_and_call ehist i 
 								~if_found:(fun d -> d)
 								~if_not_found:(fun _ -> 1)
-						else
-							()
+						else ()
 					done;
 					let total   = float_of_int(Array.sum (module Int) sel_arr_hist ~f:ident) in
 					assert(total > 0.0);
