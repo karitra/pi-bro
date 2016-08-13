@@ -243,8 +243,8 @@ end = struct
 				(* minor count of nodes which was never hit (not in endpoints histogram) *)
 				let minor_count = 
 					Hashtbl.data ehist 
-					|> Int.Set.of_list 
-					|> Set.min_elt 
+					|> List.sort ~cmp:Int.compare
+					|> List.hd
 					|> Option.value ~default:1
 				in
 				let sel_arr_hist = Array.create ~len:size minor_count in
